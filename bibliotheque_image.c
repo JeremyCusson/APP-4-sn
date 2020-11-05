@@ -112,7 +112,31 @@ int pgm_ecrire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
                int lignes, int colonnes, 
                int maxval, struct MetaData metadonnees)
 {
-    return OK;
+    FILE *Donnees_sortie = fopen(nom_fichier, "w");
+	
+	if(Donnees_sortie == NULL)
+	{
+		return ERREUR_FICHIER;
+	}
+	if(metadonnees.auteur == NULL)
+		fprintf(Donnees_sortie, "#%s;%s;%s\n", metadonnees.auteur, metadonnees.dateCreation, metadonnees.lieuCreation);
+		
+	fprintf(Donnees_sortie, "%s\n", "P2");
+	fprintf(Donnees_sortie, "%d %d\n", lignes, colonnes);
+	fprintf(Donnees_sortie, "%d\n", maxval);
+	
+	for(int i = 0; i < lignes; i++)
+	{
+		for(int j = 0; j < colonnes; j++)
+		{
+			fprintf(Donnees_sortie, "%d ", matrice[i][j]);
+		}
+		fprintf(Donnees_sortie, "\n");
+	}
+	
+	fclose(Donnees_sortie);
+	
+	return OK;
 }
 
 int pgm_creer_histogramme(int matrice[MAX_HAUTEUR][MAX_LARGEUR], int lignes, int colonnes, int histogramme[MAX_VALEUR+1])
