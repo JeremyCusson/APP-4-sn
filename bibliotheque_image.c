@@ -1,12 +1,14 @@
 /********
 Fichier: bibliotheque_images.c
-Auteurs: Jérémy Cusson
-         Thomas St-Gelais
+Auteurs: Jérémy Cusson cusj3102
+         Thomas St-Gelais stgt0901
 Date: 03 octobre 2020
 Description: Fichier de distribution pour GEN145.
 ********/
 #include <string.h>
 #include "bibliotheque_images.h"
+
+// Fonction pôur les images noirs et blancs
 
 int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR], 
              int *p_lignes, int *p_colonnes, 
@@ -41,12 +43,6 @@ int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
 					p_metadonnees->auteur[compteur] = Caractere;
 					compteur++;
 				}
-				else
-				if(Caractere == '\n')
-				{
-					return ERREUR_FORMAT;
-				}
-				
 			}
 			compteur = 0;
 			do
@@ -57,32 +53,33 @@ int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
 					p_metadonnees->dateCreation[compteur] = Caractere;
 					compteur++;
 				}
-				else
-				if(Caractere == '\n')
+				if(Caractere == -1)
 				{
 					return ERREUR_FORMAT;
 				}
-			}while(Caractere != ';');
+			}while(Caractere != ';' && Caractere != -1);
 			compteur = 0;
 			do
 			{
 				Caractere = fgetc(Donnees_entree);
-				if(Caractere != ';')
+				if(Caractere != ';' && Caractere != '\n')
 				{
 					p_metadonnees->lieuCreation[compteur] = Caractere;
 					compteur++;
 				}
-			}while(Caractere != '\n');
+			}while(Caractere != '\n' && Caractere != -1);
 		}
 		else
+		{
 			rewind(Donnees_entree);
+		}
 		fscanf(Donnees_entree, "%s", format);
 		if(format[0] != 'P' && format[1] != '2')
 		{
 			return ERREUR_FORMAT;
 		}
 		
-		fscanf(Donnees_entree, "%d %d", &lignes, &colonnes);
+		fscanf(Donnees_entree, "%d %d", &colonnes, &lignes);
 		*p_lignes = lignes;
 		*p_colonnes = colonnes;
 		
@@ -102,13 +99,13 @@ int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
 			}
 		}
 	}
-	
 	fclose(Donnees_entree);
-	
     return OK;
 }
 
-int pgm_ecrire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR], int lignes, int colonnes, int maxval, struct MetaData metadonnees)
+int pgm_ecrire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR], 
+               int lignes, int colonnes, 
+               int maxval, struct MetaData metadonnees)
 {
     FILE *Donnees_sortie = fopen(nom_fichier, "w");
 	
@@ -116,8 +113,11 @@ int pgm_ecrire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR], int li
 	{
 		return ERREUR_FICHIER;
 	}
-	if(metadonnees.auteur == NULL)
+	
+	if(metadonnees.auteur != NULL)
+	{
 		fprintf(Donnees_sortie, "#%s;%s;%s\n", metadonnees.auteur, metadonnees.dateCreation, metadonnees.lieuCreation);
+	}
 		
 	fprintf(Donnees_sortie, "%s\n", "P2");
 	fprintf(Donnees_sortie, "%d %d\n", lignes, colonnes);
@@ -137,7 +137,9 @@ int pgm_ecrire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR], int li
 	return OK;
 }
 
-int pgm_copier(int matrice1[MAX_HAUTEUR][MAX_LARGEUR], int lignes1, int colonnes1, int matrice2[MAX_HAUTEUR][MAX_LARGEUR], int *p_lignes2, int *p_colonnes2)
+int pgm_copier(int matrice1[MAX_HAUTEUR][MAX_LARGEUR], int lignes1, 
+				int colonnes1, int matrice2[MAX_HAUTEUR][MAX_LARGEUR],
+				 int *p_lignes2, int *p_colonnes2)
 {
 	int i = 0, j = 0;
 
@@ -189,7 +191,8 @@ int pgm_creer_histogramme(int matrice[MAX_HAUTEUR][MAX_LARGEUR], int lignes, int
 	return OK;
 }
 
-int pgm_couleur_preponderante(int matrice[MAX_HAUTEUR][MAX_LARGEUR], int lignes, int colonnes)
+int pgm_couleur_preponderante(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
+								int lignes, int colonnes)
 {
 	
 	int i = 0, couleur_preponderante = 0;
@@ -260,7 +263,7 @@ int pgm_creer_negatif(int matrice[MAX_HAUTEUR][MAX_LARGEUR], int lignes,
 
 int pgm_extraire(int matrice[MAX_HAUTEUR][MAX_LARGEUR], int lignes1, int colonnes1, int lignes2, int colonnes2, int *p_lignes, int *p_colonnes)
 {
-	if(lignes1 > *p_lignes || colonnes1 > *p_colonnes || lignes2 > *p_lignes || colonnes2 > *p_colonnes)
+	if(lignes1 >= *p_lignes || colonnes1 >= *p_colonnes || lignes2 >= *p_lignes || colonnes2 >= *p_colonnes)
 	{
 		return ERREUR_TAILLE;
 	}
@@ -345,6 +348,8 @@ int pgm_pivoter90(int matrice[MAX_HAUTEUR][MAX_LARGEUR], int *p_lignes, int *p_c
 	return OK;
 }
 
+// Fonction pour les images en couleur
+
 int ppm_lire(char nom_fichier[], struct RGB matrice[MAX_HAUTEUR][MAX_LARGEUR], int *p_lignes, int *p_colonnes, int *p_maxval, struct MetaData *p_metadonnees)
 {
 	int Caractere = 0;
@@ -376,12 +381,6 @@ int ppm_lire(char nom_fichier[], struct RGB matrice[MAX_HAUTEUR][MAX_LARGEUR], i
 					p_metadonnees->auteur[compteur] = Caractere;
 					compteur++;
 				}
-				else
-				if(Caractere == '\n')
-				{
-					return ERREUR_FORMAT;
-				}
-				
 			}
 			compteur = 0;
 			do
@@ -392,22 +391,21 @@ int ppm_lire(char nom_fichier[], struct RGB matrice[MAX_HAUTEUR][MAX_LARGEUR], i
 					p_metadonnees->dateCreation[compteur] = Caractere;
 					compteur++;
 				}
-				else
-				if(Caractere == '\n')
+				if(Caractere == -1)
 				{
 					return ERREUR_FORMAT;
 				}
-			}while(Caractere != ';');
+			}while(Caractere != ';' && Caractere != -1);
 			compteur = 0;
 			do
 			{
 				Caractere = fgetc(Donnees_entree);
-				if(Caractere != ';')
+				if(Caractere != ';' && Caractere != '\n')
 				{
 					p_metadonnees->lieuCreation[compteur] = Caractere;
 					compteur++;
 				}
-			}while(Caractere != '\n');
+			}while(Caractere != '\n' && Caractere != -1);
 		}
 		else
 			rewind(Donnees_entree);
@@ -417,7 +415,7 @@ int ppm_lire(char nom_fichier[], struct RGB matrice[MAX_HAUTEUR][MAX_LARGEUR], i
 			return ERREUR_FORMAT;
 		}
 		
-		fscanf(Donnees_entree, "%d %d", &lignes, &colonnes);
+		fscanf(Donnees_entree, "%d %d", &colonnes, &lignes);
 		*p_lignes = lignes;
 		*p_colonnes = colonnes;
 		
@@ -445,29 +443,34 @@ int ppm_lire(char nom_fichier[], struct RGB matrice[MAX_HAUTEUR][MAX_LARGEUR], i
 
 int ppm_ecrire(char nom_fichier[], struct RGB matrice[MAX_HAUTEUR][MAX_LARGEUR], int lignes, int colonnes, int maxval, struct MetaData metadonnees)
 {
-	FILE *Donnees_sortie = fopen(nom_fichier, "w");
+	FILE *ppm_sortie = NULL;
+	ppm_sortie = fopen(nom_fichier, "w");
 	
-	if(Donnees_sortie == NULL)
+	if(ppm_sortie == NULL)
 	{
 		return ERREUR_FICHIER;
 	}
-	if(metadonnees.auteur == NULL)
-		fprintf(Donnees_sortie, "#%s;%s;%s\n", metadonnees.auteur, metadonnees.dateCreation, metadonnees.lieuCreation);
+	if(lignes > MAX_LARGEUR || colonnes > MAX_HAUTEUR)
+	{
+		return ERREUR_TAILLE;
+	}
+	
+	if(metadonnees.auteur != NULL)
+		fprintf(ppm_sortie, "#%s;%s;%s\n", metadonnees.auteur, metadonnees.dateCreation, metadonnees.lieuCreation);
 		
-	fprintf(Donnees_sortie, "%s\n", "P3");
-	fprintf(Donnees_sortie, "%d %d\n", lignes, colonnes);
-	fprintf(Donnees_sortie, "%d\n", maxval);
+	fprintf(ppm_sortie, "%s\n", "P3");
+	fprintf(ppm_sortie, "%d %d \n", colonnes, lignes);
+	fprintf(ppm_sortie, "%d\n", maxval);
 	
 	for(int i = 0; i < lignes; i++)
 	{
 		for(int j = 0; j < colonnes; j++)
 		{
-			fprintf(Donnees_sortie, "%d %d %d ", matrice[i][j].valeurR, matrice[i][j].valeurG, matrice[i][j].valeurB);
+			fprintf(ppm_sortie, "%d %d %d ", matrice[i][j].valeurR, matrice[i][j].valeurG, matrice[i][j].valeurB);
 		}
-		fprintf(Donnees_sortie, "\n");
 	}
 	
-	fclose(Donnees_sortie);
+	fclose(ppm_sortie);
 	
 	return OK;
 }
